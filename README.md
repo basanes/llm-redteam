@@ -8,6 +8,7 @@ The repository now includes a deterministic offline evaluator with:
 
 - 10 controlled direct-injection cases in `datasets/direct_injection_v0.jsonl`;
 - a fixture adapter that makes no network calls;
+- an opt-in OpenAI Chat Completions adapter;
 - transparent `pass`, `fail`, and `review` classification;
 - JSON results and a Markdown scorecard;
 - unit tests for loading, classification, and reporting.
@@ -31,6 +32,25 @@ python -m attacks.prompt_injection.runner \
 
 The command writes `results/demo/results.json` and `results/demo/scorecard.md`.
 
+## Run an authorized live evaluation
+
+The live adapter is **opt-in**. It makes network requests only when you select
+`--adapter openai`, and it requires `OPENAI_API_KEY` from the environment. The
+key is never read from a file in the repository or written to evaluation output.
+
+```bash
+export OPENAI_API_KEY="your-key-in-your-shell"
+python -m attacks.prompt_injection.runner \
+  --adapter openai \
+  --model gpt-4o-mini \
+  --dataset datasets/direct_injection_v0.jsonl \
+  --out results/openai-baseline
+```
+
+For OpenAI-compatible gateways, optionally set `OPENAI_BASE_URL`. Use only
+models and endpoints that you are authorized to evaluate. The fixture adapter
+remains the default and is the recommended path for tests and development.
+
 Run tests with:
 
 ```bash
@@ -45,7 +65,7 @@ This project is for educational and research use against models and applications
 
 ```text
 attacks/prompt_injection/  # classifier and CLI runner
-llm_redteam/               # schemas, adapters, reporting
+llm_redteam/               # schemas, fixture/live adapters, reporting
  datasets/                 # versioned JSONL cases
  tests/                    # offline tests
  results/                  # generated outputs (ignored by git)

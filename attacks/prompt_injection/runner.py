@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from attacks.prompt_injection.classifier import classify
-from llm_redteam.adapters import FixtureAdapter, ModelAdapter
+from llm_redteam.adapters import FixtureAdapter, ModelAdapter, OpenAIAdapter
 from llm_redteam.reporting import write_reports
 from llm_redteam.schemas import EvalResult, TestCase
 
@@ -41,11 +41,15 @@ def run(dataset: Path, out_dir: Path, adapter: ModelAdapter) -> list[EvalResult]
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run controlled direct prompt-injection evaluations.")
-    parser.add_argument("--adapter", choices=["fixture"], default="fixture")
+    parser.add_argument("--adapter", choices=["fixture", "openai"], default="fixture")
+    parser.add_argument("--model", default=None, help="Model name; used by the openai adapter")
     parser.add_argument("--dataset", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
-    adapter = FixtureAdapter()
+    if args.adapter == "openai":
+        adapter = OpenAIAdapter(model=args.model or "gpt-4o-mini")
+    else:
+        adapter = FixtureAdapter(model=args.model or "fixture-v0")
     results = run(args.dataset, args.out, adapter)
     counts = {verdict: sum(r.verdict == verdict for r in results) for verdict in ("pass", "fail", "review")}
     print(f"model={adapter.model} cases={len(results)} pass={counts['pass']} fail={counts['fail']} review={counts['review']}")
